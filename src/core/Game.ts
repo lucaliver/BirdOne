@@ -3,12 +3,14 @@ import { Scene } from './Scene';
 import { TouchControls } from '../ui/TouchControls';
 
 import { GAME_CONFIG } from '../config/Constants';
+import { EventBus } from './EventBus';
 
 export class Game {
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
     input: Input;
     touchControls: TouchControls;
+    eventBus: EventBus;
     currentScene: Scene | null = null;
     lastTime: number = 0;
     scale: number = 1;
@@ -18,6 +20,7 @@ export class Game {
         this.ctx = this.canvas.getContext('2d')!;
         this.input = new Input(this.canvas);
         this.touchControls = new TouchControls(this.input);
+        this.eventBus = new EventBus();
 
         this.resize();
         window.addEventListener('resize', () => this.resize());

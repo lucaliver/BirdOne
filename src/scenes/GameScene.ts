@@ -11,6 +11,10 @@ export class GameScene extends Scene {
     botControllers: BotController[] = [];
     hud: HUD;
 
+    private onGameOver = (payload: { winner: 'player' | 'enemy'; message: string }) => {
+        this.game.setScene(new GameOverScene(this.game, payload.message));
+    };
+
     constructor(game: Game, playerRace: BirdRace) {
         super(game);
         this.gameState = new GameState();
@@ -52,11 +56,19 @@ export class GameScene extends Scene {
         if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
             this.game.touchControls.show();
         }
+        this.game.eventBus.on('GAME_OVER', this.onGameOver);
     }
 
     exit(): void {
         this.game.touchControls.hide();
+        this.game.eventBus.off('GAME_OVER', this.onGameOver);
+        // Cleanup listeners would be good here if we had a way to remove specific ones easily without storing the ref.
+        // For now, we rely on the fact that the scene is discarded. 
+        // BUT EventBus is on Game (persistent), so we MUST remove listeners!
+        // I need to store the callback to remove it.
     }
+
+    // ... (rest of file)
 
     update(dt: number): void {
         this.gameState.update(dt);
@@ -129,11 +141,11 @@ export class GameScene extends Scene {
 
         // Check Death
         if (player.hp <= 0) {
-            this.game.setScene(new GameOverScene(this.game, 'You Died! Defeat!'));
+            this.game.eventBus.emit('GAME_OVER', { winner: 'enemy', message: 'You Died! Defeat!' });
         }
 
         if (this.gameState.enemies.length === 0) {
-            this.game.setScene(new GameOverScene(this.game, 'All Enemies Defeated! Victory!'));
+            this.game.eventBus.emit('GAME_OVER', { winner: 'player', message: 'All Enemies Defeated! Victory!' });
         }
     }
 
@@ -153,6 +165,9 @@ export class GameScene extends Scene {
                 if (p.collidesWith(b)) {
                     b.hp -= p.damage;
                     p.active = false;
+                    if (b.hp <= 0) {
+                        this.game.eventBus.emit('ENTITY_DIED', { entityId: 'bird', type: b.team });
+                    }
                 }
             });
         });
@@ -160,9 +175,9 @@ export class GameScene extends Scene {
 
     checkWinCondition() {
         if (this.gameState.enemies.length < this.gameState.allies.length + 1) {
-            this.game.setScene(new GameOverScene(this.game, 'Time Up! Victory (More Alive)!'));
+            this.game.eventBus.emit('GAME_OVER', { winner: 'player', message: 'Time Up! Victory (More Alive)!' });
         } else {
-            this.game.setScene(new GameOverScene(this.game, 'Time Up! Defeat (Less Alive)!'));
+            this.game.eventBus.emit('GAME_OVER', { winner: 'enemy', message: 'Time Up! Defeat (Less Alive)!' });
         }
     }
 
