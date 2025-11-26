@@ -2,14 +2,16 @@
 
 ## 1. PANORAMICA TECNOLOGICA
 
-Si tratta di un gioco 2D web da essere giocato su mobile.
+Il progetto è un gioco 2D web per mobile.
 
 ### STACK TECNOLOGICO
-*   **Linguaggio:** TypeScript (Strict Mode).
-*   **Build Tool:** Vite (HMR, Optimized Build).
-*   **Rendering:** HTML5 Canvas API.
+
+- **Linguaggio:** TypeScript (Strict Mode).
+- **Build Tool:** Vite (HMR, Optimized Build).
+- **Rendering:** HTML5 Canvas API.
 
 ### STRUTTURA DEL PROGETTO
+
 Il progetto è organizzato per dominio:
 
 ```
@@ -40,50 +42,71 @@ Il progetto è organizzato per dominio:
 ```
 
 ### ARCHITETTURA & PRACTICES
-*   **Game Loop:** Implementato con `requestAnimationFrame` e calcolo del `dt`.
-*   **Scene Management:** Sistema di transizione tra scene (`enter`, `exit`, `update`, `draw`).
-*   **Input Handling:** Sistema centralizzato che normalizza Mouse e Touch, con supporto al reset tra scene.
-*   **OOP:** Architettura basata su ereditarietà (`Entity` -> `Bird`).
-*   **Code Quality:** Linting (ESLint) e Formatting (Prettier) attivi. Strict Typing abilitato.
-*   **Git:** Uso di Conventional Commits.
+
+- **Game Loop:** Implementato con `requestAnimationFrame` e calcolo del `dt`.
+- **Scene Management:** Sistema di transizione tra scene (`enter`, `exit`, `update`, `draw`).
+- **Input Handling:** Sistema centralizzato che normalizza Mouse e Touch, con supporto al reset tra scene.
+- **OOP:** Architettura basata su ereditarietà (`Entity` -> `Bird`).
+- **Code Quality:** Linting (ESLint) e Formatting (Prettier) attivi. Strict Typing abilitato.
+- **Git:** Uso di Conventional Commits.
 
 ---
 
-## 2. ARCHITETTURA SEMPLIFICATA (NEXT STEPS)
+## 2. ARCHITETTURA
 
-Per mantenere il gioco leggero e manutenibile su mobile/web, adotteremo questi specifici "mattoni" architetturali.
+- **Core Engine:** `[OK]` (Game Loop, Scene Management, Input Handling).
+- **Game State:** `[OK]` (Centralized GameState, Entity Management).
+- **AI:** `[OK]` (BotController con logica di ricerca, movimento e sparo).
+- **UI/HUD:** `[OK]` (HUD Class, Mobile-First Design, Scaling Logico).
+- **Event System:** `[OK]` (EventBus tipizzato per eventi critici).
+- **Assets:** `[TO DO]` (Placeholder shapes attuali, necessario caricamento sprite).
+- **Audio:** `[SOON]` (Sistema audio non ancora implementato).
 
-### A) GAMESTATE CENTRALE
-Un singolo oggetto/classe `GameState` che funge da "Single Source of Truth" per la partita corrente.
-*   **Contiene:** Tempo partita, Punteggio Team, Stato Vittoria/Sconfitta, Riferimento al Player, Lista Entità.
-*   **Uso:** Tutto il resto (HUD, GameOver, AI) legge da qui. Niente stati sparsi.
+### Core
 
-### B) AI MINIMALE (BOT CONTROLLER)
-Niente Behavior Trees complessi. Una classe `BotController` semplice:
-*   Ogni X ms sceglie un target (il player o un nemico vicino).
-*   Si muove verso il target.
-*   Spara quando è a range.
-*   Logica: "Muoviti verso/indietro, Spara".
+- **Game.ts:** Entry point. Gestisce il loop principale, il canvas, l'input e l'EventBus.
+- **Scene.ts:** Classe base per le scene (Menu, Game, GameOver, ecc.).
+- **GameState.ts:** "Single Source of Truth". Contiene i dati della partita (player, entities, score, time).
+- **EventBus.ts:** Sistema Pub/Sub per disaccoppiare la logica (es. Game Over, Entity Death).
+- **Input.ts:** Gestisce tastiera, mouse e touch, con correzione delle coordinate per lo scaling.
 
-### C) EVENT BUS MINIMALE & TIPATO
-Un sistema di eventi molto piccolo, non globale onnipresente, solo per eventi critici di UI/Audio.
-*   **Eventi:** `ENTITY_DIED`, `SCORE_CHANGED`, `MATCH_ENDED`.
-*   **Consumer:** HUD (aggiorna score), Audio (suona SFX), Achievements.
+### Entities
 
-### D) UI & SCALING
-*   **HUD:** Legge passivamente dal `GameState` (Vita Player, Score, Timer).
-*   **Scaling:** Definire una risoluzione logica (es. 1920x1080) e usare una singola funzione per convertire coordinate `Schermo <-> Mondo`, gestendo il `devicePixelRatio`.
+- **Bird.ts:** Classe base per Player e Bot. Gestisce fisica, rendering e stato (HP, Team).
+- **Projectile.ts:** Gestisce i proiettili.
+- **BotController.ts:** Incapsula la logica AI (Targeting, Movement, Shooting).
 
-### E) PERFORMANCE & TOOLING
-*   **Object Pool:** Solo per i **Proiettili** (sono tanti e frequenti). Le entità uccelli sono poche (5v5), non serve pool.
-*   **Debug Overlay:** Semplice contatore FPS, Numero Entità, Numero Proiettili.
+### UI
 
----
+- **HUD.ts:** Gestisce il rendering dell'interfaccia di gioco (HP, Timer, Score).
+- **TouchControls.ts:** Gestisce i controlli touch su mobile (Joystick, Button).
 
-## 3. ORDINE PRATICO DI LAVORO (WORKFLOW)
+### Scaling
 
-1.  **Stabilizzare Core:** Game Loop + Implementazione `GameState`.
-2.  **AI Base:** Implementare `BotController` (seguire e sparare).
-3.  **UI:** Implementare `HUD` collegato al `GameState`.
-4.  **Events:** Aggiungere Event Bus minimale per score/morte.
-5.  **Polish:** Object Pooling proiettili, Achievements, Settings.
+Il gioco utilizza una **Risoluzione Logica** (es. 1920x1080).
+
+- Il Canvas si adatta alla finestra del browser.
+- Il contesto di rendering (`ctx`) viene scalato automaticamente per mantenere le proporzioni e la visibilità verticale.
+- Le coordinate di input vengono convertite dallo spazio schermo allo spazio logico.
+
+## 3. ROADMAP
+
+### PRIORITÀ ALTA
+
+- **Pubblicare su Github Pages:** rendere online.
+- **Assets Grafici:** Sostituire i cerchi colorati con Sprite (Bird, Sfondi, Proiettili).
+- **Audio:** Implementare effetti sonori (Sparo, Colpo, Game Over) e musica.
+- **Polish Gameplay:** Bilanciamento danni/velocità, feedback visivo (particelle).
+
+### PRIORITÀ MEDIA
+
+- **Settings:** Aggiungere opzioni per volume audio, vibrazione, effetti.
+- **Achievements:** Aggiungere obiettivi sbloccabili (es. "Cecchino: Uccidi 3 nemici senza mancare", "Sopravvissuto: Vinci con 1 HP").
+- **Tutorial:** Aggiungere una breve guida interattiva per imparare i comandi.
+- **Map Design:** Aggiungere ostacoli o elementi ambientali.
+- **Progressione:** Sbloccare nuovi uccelli o skin.
+
+### PRIORITÀ BASSA
+
+- **Multiplayer Online:** (Attualmente il gioco è Single Player vs AI).
+- **CI/CD:** Pipeline di build automatica.
