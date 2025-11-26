@@ -11,6 +11,6 @@ export abstract class Scene {
     abstract draw(ctx: CanvasRenderingContext2D): void;
 
     // Optional lifecycle hooks
-    enter(): void { }
-    exit(): void { }
+    enter(): void {}
+    exit(): void {}
 }

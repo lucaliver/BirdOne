@@ -1,17 +1,20 @@
 import { Input } from './Input';
 import { Scene } from './Scene';
+import { TouchControls } from '../ui/TouchControls';
 
 export class Game {
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
     input: Input;
+    touchControls: TouchControls;
     currentScene: Scene | null = null;
     lastTime: number = 0;
 
     constructor(canvasId: string) {
         this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
         this.ctx = this.canvas.getContext('2d')!;
-        this.input = new Input();
+        this.input = new Input(this.canvas);
+        this.touchControls = new TouchControls(this.input);
 
         this.resize();
         window.addEventListener('resize', () => this.resize());
@@ -28,6 +31,7 @@ export class Game {
         if (this.currentScene) {
             this.currentScene.exit();
         }
+        this.input.reset(); // Clear input to prevent "double tap" across scenes
         this.currentScene = scene;
         if (this.currentScene) {
             this.currentScene.enter();

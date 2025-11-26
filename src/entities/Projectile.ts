@@ -1,4 +1,5 @@
 import { Entity } from './Entity';
+import { COLORS } from '../config/Constants';
 
 export class Projectile extends Entity {
     owner: Entity;
@@ -6,7 +7,7 @@ export class Projectile extends Entity {
     active: boolean = true;
 
     constructor(x: number, y: number, vx: number, vy: number, owner: Entity, damage: number) {
-        super(x, y, 8, 8, 'yellow');
+        super(x, y, 8, 8, COLORS.PROJECTILE);
         this.vx = vx;
         this.vy = vy;
         this.owner = owner;

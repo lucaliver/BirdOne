@@ -1,7 +1,8 @@
 import { Entity } from './Entity';
 import { Projectile } from './Projectile';
+import { BIRD_STATS, COLORS } from '../config/Constants';
 
-export type BirdRace = 'Eagle' | 'Owl' | 'Parrot' | 'Penguin';
+export type BirdRace = 'Eagle' | 'Owl' | 'Pidgeon' | 'Hummingbird';
 
 export class Bird extends Entity {
     race: BirdRace;
@@ -14,31 +15,31 @@ export class Bird extends Entity {
     team: 'player' | 'enemy';
 
     constructor(x: number, y: number, race: BirdRace, team: 'player' | 'enemy') {
-        super(x, y, 32, 32, team === 'player' ? 'lime' : 'red');
+        super(x, y, 32, 32, team === 'player' ? COLORS.PLAYER : COLORS.ENEMY);
         this.race = race;
         this.team = team;
 
         // Stats based on race
         switch (race) {
             case 'Eagle':
-                this.maxHp = 100;
-                this.attackDamage = 20;
-                this.speed = 250;
+                this.maxHp = BIRD_STATS.EAGLE.MAX_HP;
+                this.attackDamage = BIRD_STATS.EAGLE.DAMAGE;
+                this.speed = BIRD_STATS.EAGLE.SPEED;
                 break;
             case 'Owl':
-                this.maxHp = 80;
-                this.attackDamage = 30;
-                this.speed = 220;
+                this.maxHp = BIRD_STATS.OWL.MAX_HP;
+                this.attackDamage = BIRD_STATS.OWL.DAMAGE;
+                this.speed = BIRD_STATS.OWL.SPEED;
                 break;
-            case 'Parrot':
-                this.maxHp = 60;
-                this.attackDamage = 15;
-                this.speed = 300;
+            case 'Pidgeon':
+                this.maxHp = BIRD_STATS.PIDGEON.MAX_HP;
+                this.attackDamage = BIRD_STATS.PIDGEON.DAMAGE;
+                this.speed = BIRD_STATS.PIDGEON.SPEED;
                 break;
-            case 'Penguin': // Flying penguin? Sure, it's a game.
-                this.maxHp = 150;
-                this.attackDamage = 10;
-                this.speed = 180;
+            case 'Hummingbird':
+                this.maxHp = BIRD_STATS.HUMMINGBIRD.MAX_HP;
+                this.attackDamage = BIRD_STATS.HUMMINGBIRD.DAMAGE;
+                this.speed = BIRD_STATS.HUMMINGBIRD.SPEED;
                 break;
         }
         this.hp = this.maxHp;
@@ -68,7 +69,10 @@ export class Bird extends Entity {
         return new Projectile(
             this.x + this.width / 2 - 4,
             this.y + this.height / 2 - 4,
-            vx, vy, this, this.attackDamage
+            vx,
+            vy,
+            this,
+            this.attackDamage,
         );
     }
 

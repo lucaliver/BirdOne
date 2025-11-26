@@ -1,8 +1,8 @@
-import { Scene } from './Scene';
-import { Game } from './Game';
+import { Scene } from '../core/Scene';
+import { Game } from '../core/Game';
 import { GameOverScene } from './GameOverScene';
-import { Bird, type BirdRace } from './Bird';
-import { Projectile } from './Projectile';
+import { Bird, type BirdRace } from '../entities/Bird';
+import { Projectile } from '../entities/Projectile';
 
 export class GameScene extends Scene {
     player: Bird;
@@ -19,17 +19,28 @@ export class GameScene extends Scene {
 
         // Create Allies (4)
         for (let i = 0; i < 4; i++) {
-            const races: BirdRace[] = ['Eagle', 'Owl', 'Parrot', 'Penguin'];
+            const races: BirdRace[] = ['Eagle', 'Owl', 'Pidgeon', 'Hummingbird'];
             const randomRace = races[Math.floor(Math.random() * races.length)];
             this.allies.push(new Bird(100, 100 + i * 100, randomRace, 'player'));
         }
 
         // Create Enemies (5)
         for (let i = 0; i < 5; i++) {
-            const races: BirdRace[] = ['Eagle', 'Owl', 'Parrot', 'Penguin'];
+            const races: BirdRace[] = ['Eagle', 'Owl', 'Pidgeon', 'Hummingbird'];
             const randomRace = races[Math.floor(Math.random() * races.length)];
             this.enemies.push(new Bird(this.game.canvas.width - 100, 100 + i * 100, randomRace, 'enemy'));
         }
+    }
+
+    enter(): void {
+        // Show controls only if touch device (simple check)
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            this.game.touchControls.show();
+        }
+    }
+
+    exit(): void {
+        this.game.touchControls.hide();
     }
 
     update(dt: number): void {
@@ -42,14 +53,50 @@ export class GameScene extends Scene {
         // Player Movement
         this.player.vx = 0;
         this.player.vy = 0;
+
+        // Keyboard
         if (this.game.input.keys['KeyW'] || this.game.input.keys['ArrowUp']) this.player.vy = -this.player.speed;
         if (this.game.input.keys['KeyS'] || this.game.input.keys['ArrowDown']) this.player.vy = this.player.speed;
         if (this.game.input.keys['KeyA'] || this.game.input.keys['ArrowLeft']) this.player.vx = -this.player.speed;
         if (this.game.input.keys['KeyD'] || this.game.input.keys['ArrowRight']) this.player.vx = this.player.speed;
 
+        // Joystick Override
+        if (this.game.input.joystick.active) {
+            this.player.vx = this.game.input.joystick.x * this.player.speed;
+            this.player.vy = this.game.input.joystick.y * this.player.speed;
+        }
+
         // Player Shooting
         if (this.game.input.mouse.down) {
             const proj = this.player.shoot(this.game.input.mouse.x, this.game.input.mouse.y);
+            if (proj) this.projectiles.push(proj);
+        }
+
+        // Touch Shooting (Auto-aim nearest or just forward? Let's aim forward or at nearest enemy for mobile QoL)
+        // For now, let's just shoot in the direction of movement or last movement if moving, else right.
+        if (this.game.input.isShooting) {
+            // Simple mobile aim: Shoot in direction of movement
+            let targetX = this.player.x + (this.player.vx || 100); // Default right if still
+            let targetY = this.player.y + this.player.vy;
+
+            // Better: Auto-aim nearest enemy if visible
+            let nearest: Bird | null = null;
+            let minDst = 400; // Range
+            this.enemies.forEach((e) => {
+                if (e.hp <= 0) return;
+                const dist = Math.hypot(e.x - this.player.x, e.y - this.player.y);
+                if (dist < minDst) {
+                    minDst = dist;
+                    nearest = e;
+                }
+            });
+
+            if (nearest) {
+                targetX = (nearest as Bird).x;
+                targetY = (nearest as Bird).y;
+            }
+
+            const proj = this.player.shoot(targetX, targetY);
             if (proj) this.projectiles.push(proj);
         }
 
@@ -58,12 +105,12 @@ export class GameScene extends Scene {
 
         // Update Entities
         this.player.update(dt);
-        this.allies.forEach(e => e.update(dt));
-        this.enemies.forEach(e => e.update(dt));
-        this.projectiles.forEach(p => p.update(dt));
+        this.allies.forEach((e) => e.update(dt));
+        this.enemies.forEach((e) => e.update(dt));
+        this.projectiles.forEach((p) => p.update(dt));
 
         // Cleanup Inactive Projectiles
-        this.projectiles = this.projectiles.filter(p => p.active);
+        this.projectiles = this.projectiles.filter((p) => p.active);
 
         // Collisions
         this.checkCollisions();
@@ -74,8 +121,8 @@ export class GameScene extends Scene {
         }
 
         // Remove dead bots
-        this.allies = this.allies.filter(a => a.hp > 0);
-        this.enemies = this.enemies.filter(e => e.hp > 0);
+        this.allies = this.allies.filter((a) => a.hp > 0);
+        this.enemies = this.enemies.filter((e) => e.hp > 0);
 
         if (this.enemies.length === 0) {
             this.game.setScene(new GameOverScene(this.game, 'All Enemies Defeated! Victory!'));
@@ -86,12 +133,12 @@ export class GameScene extends Scene {
         // Simple AI: Move towards nearest enemy and shoot
         const allPlayers = [this.player, ...this.allies];
 
-        this.enemies.forEach(enemy => {
+        this.enemies.forEach((enemy) => {
             // Find nearest target
             let nearest: Bird | null = null;
             let minDst = Infinity;
 
-            allPlayers.forEach(p => {
+            allPlayers.forEach((p) => {
                 if (p.hp <= 0) return;
                 const dist = Math.hypot(p.x - enemy.x, p.y - enemy.y);
                 if (dist < minDst) {
@@ -106,7 +153,8 @@ export class GameScene extends Scene {
                 const dy = (nearest as Bird).y - enemy.y;
                 const dist = Math.hypot(dx, dy);
 
-                if (dist > 200) { // Keep distance
+                if (dist > 200) {
+                    // Keep distance
                     enemy.vx = (dx / dist) * enemy.speed * 0.5;
                     enemy.vy = (dy / dist) * enemy.speed * 0.5;
                 } else {
@@ -121,11 +169,11 @@ export class GameScene extends Scene {
         });
 
         // Allies AI (similar to enemies but targeting enemies)
-        this.allies.forEach(ally => {
+        this.allies.forEach((ally) => {
             let nearest: Bird | null = null;
             let minDst = Infinity;
 
-            this.enemies.forEach(e => {
+            this.enemies.forEach((e) => {
                 if (e.hp <= 0) return;
                 const dist = Math.hypot(e.x - ally.x, e.y - ally.y);
                 if (dist < minDst) {
@@ -157,10 +205,10 @@ export class GameScene extends Scene {
         // Projectiles vs Birds
         const allBirds = [this.player, ...this.allies, ...this.enemies];
 
-        this.projectiles.forEach(p => {
+        this.projectiles.forEach((p) => {
             if (!p.active) return;
 
-            allBirds.forEach(b => {
+            allBirds.forEach((b) => {
                 if (b.hp <= 0) return;
                 if (p.owner === b) return; // Don't hit self
                 if ((p.owner as Bird).team === b.team) return; // Don't hit teammates
@@ -174,7 +222,8 @@ export class GameScene extends Scene {
     }
 
     checkWinCondition() {
-        if (this.enemies.length < (this.allies.length + 1)) { // +1 for player
+        if (this.enemies.length < this.allies.length + 1) {
+            // +1 for player
             this.game.setScene(new GameOverScene(this.game, 'Time Up! Victory (More Alive)!'));
         } else {
             this.game.setScene(new GameOverScene(this.game, 'Time Up! Defeat (Less Alive)!'));
@@ -183,9 +232,9 @@ export class GameScene extends Scene {
 
     draw(ctx: CanvasRenderingContext2D): void {
         this.player.draw(ctx);
-        this.allies.forEach(e => e.draw(ctx));
-        this.enemies.forEach(e => e.draw(ctx));
-        this.projectiles.forEach(p => p.draw(ctx));
+        this.allies.forEach((e) => e.draw(ctx));
+        this.enemies.forEach((e) => e.draw(ctx));
+        this.projectiles.forEach((p) => p.draw(ctx));
 
         // Draw HUD
         ctx.fillStyle = '#fff';
