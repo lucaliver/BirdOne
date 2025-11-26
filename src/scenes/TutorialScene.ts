@@ -24,18 +24,19 @@ export class TutorialScene extends Scene {
     }
 
     draw(ctx: CanvasRenderingContext2D): void {
-        const w = this.game.canvas.width;
-        const h = this.game.canvas.height;
+        const scale = ctx.getTransform().a;
+        const w = ctx.canvas.width / scale;
+        const h = 1080;
 
         ctx.fillStyle = '#222';
         ctx.fillRect(0, 0, w, h);
 
         ctx.fillStyle = '#fff';
-        ctx.font = '48px Arial';
+        ctx.font = 'bold 40px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('TUTORIAL', w / 2, h / 2 - 50);
 
-        ctx.font = '24px Arial';
+        ctx.font = '20px Arial';
         ctx.fillText('Use WASD/Arrows to Move', w / 2, h / 2);
         ctx.fillText('Click/Tap to Shoot', w / 2, h / 2 + 40);
 

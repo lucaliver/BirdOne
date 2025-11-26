@@ -4,14 +4,17 @@ import { GameOverScene } from './GameOverScene';
 import { Bird, type BirdRace } from '../entities/Bird';
 import { GameState } from '../core/GameState';
 import { BotController } from '../core/BotController';
+import { HUD } from '../ui/HUD';
 
 export class GameScene extends Scene {
     gameState: GameState;
     botControllers: BotController[] = [];
+    hud: HUD;
 
     constructor(game: Game, playerRace: BirdRace) {
         super(game);
         this.gameState = new GameState();
+        this.hud = new HUD(this.gameState);
 
         // Create Player
         const player = new Bird(100, 300, playerRace, 'player');
@@ -28,10 +31,15 @@ export class GameScene extends Scene {
 
         // Create Enemies (5)
         const enemies: Bird[] = [];
+        // We need logical width here.
+        // Since we don't have ctx here, we can estimate it or use a safe value.
+        // Or we can ask Game for the scale.
+        const logicalWidth = this.game.canvas.width / this.game.scale;
+
         for (let i = 0; i < 5; i++) {
             const races: BirdRace[] = ['Eagle', 'Owl', 'Pidgeon', 'Hummingbird'];
             const randomRace = races[Math.floor(Math.random() * races.length)];
-            const enemy = new Bird(this.game.canvas.width - 100, 100 + i * 100, randomRace, 'enemy');
+            const enemy = new Bird(logicalWidth - 100, 100 + i * 100, randomRace, 'enemy');
             enemies.push(enemy);
             this.botControllers.push(new BotController(enemy, this.gameState));
         }
@@ -165,13 +173,6 @@ export class GameScene extends Scene {
         this.gameState.projectiles.forEach((p) => p.draw(ctx));
 
         // Draw HUD
-        ctx.fillStyle = '#fff';
-        ctx.font = '20px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText(`Time: ${Math.ceil(this.gameState.matchTime)}`, 20, 30);
-        if (this.gameState.player) {
-            ctx.fillText(`HP: ${this.gameState.player.hp}/${this.gameState.player.maxHp}`, 20, 60);
-        }
-        ctx.fillText(`Allies: ${this.gameState.allies.length} | Enemies: ${this.gameState.enemies.length}`, 20, 90);
+        this.hud.draw(ctx);
     }
 }

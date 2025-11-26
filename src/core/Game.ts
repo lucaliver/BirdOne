@@ -2,6 +2,8 @@ import { Input } from './Input';
 import { Scene } from './Scene';
 import { TouchControls } from '../ui/TouchControls';
 
+import { GAME_CONFIG } from '../config/Constants';
+
 export class Game {
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
@@ -9,6 +11,7 @@ export class Game {
     touchControls: TouchControls;
     currentScene: Scene | null = null;
     lastTime: number = 0;
+    scale: number = 1;
 
     constructor(canvasId: string) {
         this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -25,6 +28,13 @@ export class Game {
     resize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+
+        // Scale based on height to keep gameplay consistent vertically
+        // Target height is logical height (e.g. 1080)
+        this.scale = this.canvas.height / GAME_CONFIG.LOGICAL_RES.HEIGHT;
+
+        // Pass scale to input for coordinate correction
+        this.input.setScale(this.scale);
     }
 
     setScene(scene: Scene) {
@@ -49,7 +59,10 @@ export class Game {
             this.ctx.fillStyle = '#222';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+            this.ctx.save();
+            this.ctx.scale(this.scale, this.scale);
             this.currentScene.draw(this.ctx);
+            this.ctx.restore();
         }
 
         requestAnimationFrame((t) => this.loop(t));

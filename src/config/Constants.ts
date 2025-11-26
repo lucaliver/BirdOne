@@ -1,6 +1,7 @@
 export const GAME_CONFIG = {
     CANVAS_ID: 'game-canvas',
     MATCH_DURATION: 60, // seconds
+    LOGICAL_RES: { WIDTH: 1920, HEIGHT: 1080 },
 };
 
 export const BIRD_STATS = {

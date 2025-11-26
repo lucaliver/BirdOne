@@ -21,16 +21,23 @@ export class GameOverScene extends Scene {
     }
 
     draw(ctx: CanvasRenderingContext2D): void {
-        ctx.fillStyle = '#fff';
-        ctx.font = '48px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(this.message, this.game.canvas.width / 2, this.game.canvas.height / 2 - 50);
+        const scale = ctx.getTransform().a;
+        const w = ctx.canvas.width / scale;
+        const h = 1080;
 
-        ctx.font = '24px Arial';
+        ctx.fillStyle = '#222';
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 40px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.message, w / 2, h / 2 - 50);
+
+        ctx.font = '20px Arial';
         ctx.fillText(
-            'Press ENTER or Tap to Return to Menu',
-            this.game.canvas.width / 2,
-            this.game.canvas.height / 2 + 50,
+            'Press Enter / Tap to Return to Hub',
+            w / 2,
+            h / 2 + 50,
         );
     }
 }

@@ -69,8 +69,9 @@ export class CharacterSelectionScene extends Scene {
     }
 
     draw(ctx: CanvasRenderingContext2D): void {
-        const w = this.game.canvas.width;
-        const h = this.game.canvas.height;
+        const scale = ctx.getTransform().a;
+        const w = ctx.canvas.width / scale;
+        const h = 1080;
 
         ctx.fillStyle = '#fff';
         const titleSize = Math.min(48, Math.floor(w * 0.1));

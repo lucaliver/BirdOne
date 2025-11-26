@@ -2,6 +2,8 @@
 
 ## 1. PANORAMICA TECNOLOGICA
 
+Si tratta di un gioco 2D web da essere giocato su mobile.
+
 ### STACK TECNOLOGICO
 *   **Linguaggio:** TypeScript (Strict Mode).
 *   **Build Tool:** Vite (HMR, Optimized Build).

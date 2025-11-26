@@ -3,35 +3,26 @@ export class Input {
     mouse: { x: number; y: number; down: boolean } = { x: 0, y: 0, down: false };
     joystick: { x: number; y: number; active: boolean } = { x: 0, y: 0, active: false };
     isShooting: boolean = false;
+    scale: number = 1;
 
     constructor(target: HTMLElement) {
-        // Keyboard events are global
-        window.addEventListener('keydown', (e) => {
-            this.keys[e.code] = true;
-        });
+        // Keyboard
+        window.addEventListener('keydown', (e) => (this.keys[e.code] = true));
+        window.addEventListener('keyup', (e) => (this.keys[e.code] = false));
 
-        window.addEventListener('keyup', (e) => {
-            this.keys[e.code] = false;
-        });
-
-        // Mouse/Touch events
+        // Mouse
         const updateMouse = (clientX: number, clientY: number) => {
             const rect = target.getBoundingClientRect();
-            this.mouse.x = clientX - rect.left;
-            this.mouse.y = clientY - rect.top;
+            this.mouse.x = (clientX - rect.left) / this.scale;
+            this.mouse.y = (clientY - rect.top) / this.scale;
         };
 
-        window.addEventListener('mousemove', (e) => {
+        window.addEventListener('mousemove', (e) => updateMouse(e.clientX, e.clientY));
+        window.addEventListener('mousedown', (e) => {
             updateMouse(e.clientX, e.clientY);
-        });
-
-        window.addEventListener('mousedown', () => {
             this.mouse.down = true;
         });
-
-        window.addEventListener('mouseup', () => {
-            this.mouse.down = false;
-        });
+        window.addEventListener('mouseup', () => (this.mouse.down = false));
 
         // Touch support
         window.addEventListener(
@@ -68,5 +59,9 @@ export class Input {
         this.keys = {};
         this.mouse.down = false;
         // Keep mouse position, just reset click state
+    }
+
+    setScale(s: number) {
+        this.scale = s;
     }
 }

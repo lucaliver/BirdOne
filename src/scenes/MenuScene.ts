@@ -30,7 +30,8 @@ export class MenuScene extends Scene {
         // Touch / Mouse
         if (this.game.input.mouse.down && !this.game.input.isDown('Mouse_prev')) {
             const y = this.game.input.mouse.y;
-            const h = this.game.canvas.height;
+            // Logical Height is always 1080
+            const h = 1080;
             const optionHeight = 60;
             const startY = h / 2;
 
@@ -77,8 +78,9 @@ export class MenuScene extends Scene {
     }
 
     draw(ctx: CanvasRenderingContext2D): void {
-        const w = this.game.canvas.width;
-        const h = this.game.canvas.height;
+        const scale = ctx.getTransform().a;
+        const w = ctx.canvas.width / scale;
+        const h = 1080;
 
         ctx.fillStyle = '#222';
         ctx.fillRect(0, 0, w, h);
