@@ -2,34 +2,41 @@ import { Scene } from '../core/Scene';
 import { Game } from '../core/Game';
 import { GameOverScene } from './GameOverScene';
 import { Bird, type BirdRace } from '../entities/Bird';
-import { Projectile } from '../entities/Projectile';
+import { GameState } from '../core/GameState';
+import { BotController } from '../core/BotController';
 
 export class GameScene extends Scene {
-    player: Bird;
-    enemies: Bird[] = [];
-    allies: Bird[] = [];
-    projectiles: Projectile[] = [];
-    gameTime: number = 60; // 60 seconds match
+    gameState: GameState;
+    botControllers: BotController[] = [];
 
     constructor(game: Game, playerRace: BirdRace) {
         super(game);
+        this.gameState = new GameState();
 
         // Create Player
-        this.player = new Bird(100, 300, playerRace, 'player');
+        const player = new Bird(100, 300, playerRace, 'player');
 
         // Create Allies (4)
+        const allies: Bird[] = [];
         for (let i = 0; i < 4; i++) {
             const races: BirdRace[] = ['Eagle', 'Owl', 'Pidgeon', 'Hummingbird'];
             const randomRace = races[Math.floor(Math.random() * races.length)];
-            this.allies.push(new Bird(100, 100 + i * 100, randomRace, 'player'));
+            const ally = new Bird(100, 100 + i * 100, randomRace, 'player');
+            allies.push(ally);
+            this.botControllers.push(new BotController(ally, this.gameState));
         }
 
         // Create Enemies (5)
+        const enemies: Bird[] = [];
         for (let i = 0; i < 5; i++) {
             const races: BirdRace[] = ['Eagle', 'Owl', 'Pidgeon', 'Hummingbird'];
             const randomRace = races[Math.floor(Math.random() * races.length)];
-            this.enemies.push(new Bird(this.game.canvas.width - 100, 100 + i * 100, randomRace, 'enemy'));
+            const enemy = new Bird(this.game.canvas.width - 100, 100 + i * 100, randomRace, 'enemy');
+            enemies.push(enemy);
+            this.botControllers.push(new BotController(enemy, this.gameState));
         }
+
+        this.gameState.init(player, allies, enemies);
     }
 
     enter(): void {
@@ -44,47 +51,47 @@ export class GameScene extends Scene {
     }
 
     update(dt: number): void {
-        this.gameTime -= dt;
-        if (this.gameTime <= 0) {
+        this.gameState.update(dt);
+
+        if (this.gameState.isGameOver) {
             this.checkWinCondition();
             return;
         }
 
+        const player = this.gameState.player!;
+
         // Player Movement
-        this.player.vx = 0;
-        this.player.vy = 0;
+        player.vx = 0;
+        player.vy = 0;
 
         // Keyboard
-        if (this.game.input.keys['KeyW'] || this.game.input.keys['ArrowUp']) this.player.vy = -this.player.speed;
-        if (this.game.input.keys['KeyS'] || this.game.input.keys['ArrowDown']) this.player.vy = this.player.speed;
-        if (this.game.input.keys['KeyA'] || this.game.input.keys['ArrowLeft']) this.player.vx = -this.player.speed;
-        if (this.game.input.keys['KeyD'] || this.game.input.keys['ArrowRight']) this.player.vx = this.player.speed;
+        if (this.game.input.keys['KeyW'] || this.game.input.keys['ArrowUp']) player.vy = -player.speed;
+        if (this.game.input.keys['KeyS'] || this.game.input.keys['ArrowDown']) player.vy = player.speed;
+        if (this.game.input.keys['KeyA'] || this.game.input.keys['ArrowLeft']) player.vx = -player.speed;
+        if (this.game.input.keys['KeyD'] || this.game.input.keys['ArrowRight']) player.vx = player.speed;
 
         // Joystick Override
         if (this.game.input.joystick.active) {
-            this.player.vx = this.game.input.joystick.x * this.player.speed;
-            this.player.vy = this.game.input.joystick.y * this.player.speed;
+            player.vx = this.game.input.joystick.x * player.speed;
+            player.vy = this.game.input.joystick.y * player.speed;
         }
 
         // Player Shooting
         if (this.game.input.mouse.down) {
-            const proj = this.player.shoot(this.game.input.mouse.x, this.game.input.mouse.y);
-            if (proj) this.projectiles.push(proj);
+            const proj = player.shoot(this.game.input.mouse.x, this.game.input.mouse.y);
+            if (proj) this.gameState.addProjectile(proj);
         }
 
-        // Touch Shooting (Auto-aim nearest or just forward? Let's aim forward or at nearest enemy for mobile QoL)
-        // For now, let's just shoot in the direction of movement or last movement if moving, else right.
+        // Touch Shooting
         if (this.game.input.isShooting) {
-            // Simple mobile aim: Shoot in direction of movement
-            let targetX = this.player.x + (this.player.vx || 100); // Default right if still
-            let targetY = this.player.y + this.player.vy;
+            let targetX = player.x + (player.vx || 100);
+            let targetY = player.y + player.vy;
 
-            // Better: Auto-aim nearest enemy if visible
             let nearest: Bird | null = null;
-            let minDst = 400; // Range
-            this.enemies.forEach((e) => {
+            let minDst = 400;
+            this.gameState.enemies.forEach((e) => {
                 if (e.hp <= 0) return;
-                const dist = Math.hypot(e.x - this.player.x, e.y - this.player.y);
+                const dist = Math.hypot(e.x - player.x, e.y - player.y);
                 if (dist < minDst) {
                     minDst = dist;
                     nearest = e;
@@ -96,122 +103,44 @@ export class GameScene extends Scene {
                 targetY = (nearest as Bird).y;
             }
 
-            const proj = this.player.shoot(targetX, targetY);
-            if (proj) this.projectiles.push(proj);
+            const proj = player.shoot(targetX, targetY);
+            if (proj) this.gameState.addProjectile(proj);
         }
 
-        // AI Logic (Simple)
-        this.updateAI(dt);
+        // AI Logic
+        this.botControllers.forEach((bot) => bot.update(dt));
 
         // Update Entities
-        this.player.update(dt);
-        this.allies.forEach((e) => e.update(dt));
-        this.enemies.forEach((e) => e.update(dt));
-        this.projectiles.forEach((p) => p.update(dt));
-
-        // Cleanup Inactive Projectiles
-        this.projectiles = this.projectiles.filter((p) => p.active);
+        player.update(dt);
+        this.gameState.allies.forEach((e) => e.update(dt));
+        this.gameState.enemies.forEach((e) => e.update(dt));
+        this.gameState.projectiles.forEach((p) => p.update(dt));
 
         // Collisions
         this.checkCollisions();
 
         // Check Death
-        if (this.player.hp <= 0) {
+        if (player.hp <= 0) {
             this.game.setScene(new GameOverScene(this.game, 'You Died! Defeat!'));
         }
 
-        // Remove dead bots
-        this.allies = this.allies.filter((a) => a.hp > 0);
-        this.enemies = this.enemies.filter((e) => e.hp > 0);
-
-        if (this.enemies.length === 0) {
+        if (this.gameState.enemies.length === 0) {
             this.game.setScene(new GameOverScene(this.game, 'All Enemies Defeated! Victory!'));
         }
     }
 
-    updateAI(_dt: number) {
-        // Simple AI: Move towards nearest enemy and shoot
-        const allPlayers = [this.player, ...this.allies];
-
-        this.enemies.forEach((enemy) => {
-            // Find nearest target
-            let nearest: Bird | null = null;
-            let minDst = Infinity;
-
-            allPlayers.forEach((p) => {
-                if (p.hp <= 0) return;
-                const dist = Math.hypot(p.x - enemy.x, p.y - enemy.y);
-                if (dist < minDst) {
-                    minDst = dist;
-                    nearest = p;
-                }
-            });
-
-            if (nearest) {
-                // Move towards
-                const dx = (nearest as Bird).x - enemy.x;
-                const dy = (nearest as Bird).y - enemy.y;
-                const dist = Math.hypot(dx, dy);
-
-                if (dist > 200) {
-                    // Keep distance
-                    enemy.vx = (dx / dist) * enemy.speed * 0.5;
-                    enemy.vy = (dy / dist) * enemy.speed * 0.5;
-                } else {
-                    enemy.vx = 0;
-                    enemy.vy = 0;
-                }
-
-                // Shoot
-                const proj = enemy.shoot((nearest as Bird).x, (nearest as Bird).y);
-                if (proj) this.projectiles.push(proj);
-            }
-        });
-
-        // Allies AI (similar to enemies but targeting enemies)
-        this.allies.forEach((ally) => {
-            let nearest: Bird | null = null;
-            let minDst = Infinity;
-
-            this.enemies.forEach((e) => {
-                if (e.hp <= 0) return;
-                const dist = Math.hypot(e.x - ally.x, e.y - ally.y);
-                if (dist < minDst) {
-                    minDst = dist;
-                    nearest = e;
-                }
-            });
-
-            if (nearest) {
-                const dx = (nearest as Bird).x - ally.x;
-                const dy = (nearest as Bird).y - ally.y;
-                const dist = Math.hypot(dx, dy);
-
-                if (dist > 200) {
-                    ally.vx = (dx / dist) * ally.speed * 0.5;
-                    ally.vy = (dy / dist) * ally.speed * 0.5;
-                } else {
-                    ally.vx = 0;
-                    ally.vy = 0;
-                }
-
-                const proj = ally.shoot((nearest as Bird).x, (nearest as Bird).y);
-                if (proj) this.projectiles.push(proj);
-            }
-        });
-    }
+    // updateAI removed - handled by BotController
 
     checkCollisions() {
-        // Projectiles vs Birds
-        const allBirds = [this.player, ...this.allies, ...this.enemies];
+        const allBirds = [this.gameState.player!, ...this.gameState.allies, ...this.gameState.enemies];
 
-        this.projectiles.forEach((p) => {
+        this.gameState.projectiles.forEach((p) => {
             if (!p.active) return;
 
             allBirds.forEach((b) => {
                 if (b.hp <= 0) return;
-                if (p.owner === b) return; // Don't hit self
-                if ((p.owner as Bird).team === b.team) return; // Don't hit teammates
+                if (p.owner === b) return;
+                if ((p.owner as Bird).team === b.team) return;
 
                 if (p.collidesWith(b)) {
                     b.hp -= p.damage;
@@ -222,8 +151,7 @@ export class GameScene extends Scene {
     }
 
     checkWinCondition() {
-        if (this.enemies.length < this.allies.length + 1) {
-            // +1 for player
+        if (this.gameState.enemies.length < this.gameState.allies.length + 1) {
             this.game.setScene(new GameOverScene(this.game, 'Time Up! Victory (More Alive)!'));
         } else {
             this.game.setScene(new GameOverScene(this.game, 'Time Up! Defeat (Less Alive)!'));
@@ -231,17 +159,19 @@ export class GameScene extends Scene {
     }
 
     draw(ctx: CanvasRenderingContext2D): void {
-        this.player.draw(ctx);
-        this.allies.forEach((e) => e.draw(ctx));
-        this.enemies.forEach((e) => e.draw(ctx));
-        this.projectiles.forEach((p) => p.draw(ctx));
+        if (this.gameState.player) this.gameState.player.draw(ctx);
+        this.gameState.allies.forEach((e) => e.draw(ctx));
+        this.gameState.enemies.forEach((e) => e.draw(ctx));
+        this.gameState.projectiles.forEach((p) => p.draw(ctx));
 
         // Draw HUD
         ctx.fillStyle = '#fff';
         ctx.font = '20px Arial';
         ctx.textAlign = 'left';
-        ctx.fillText(`Time: ${Math.ceil(this.gameTime)}`, 20, 30);
-        ctx.fillText(`HP: ${this.player.hp}/${this.player.maxHp}`, 20, 60);
-        ctx.fillText(`Allies: ${this.allies.length} | Enemies: ${this.enemies.length}`, 20, 90);
+        ctx.fillText(`Time: ${Math.ceil(this.gameState.matchTime)}`, 20, 30);
+        if (this.gameState.player) {
+            ctx.fillText(`HP: ${this.gameState.player.hp}/${this.gameState.player.maxHp}`, 20, 60);
+        }
+        ctx.fillText(`Allies: ${this.gameState.allies.length} | Enemies: ${this.gameState.enemies.length}`, 20, 90);
     }
 }

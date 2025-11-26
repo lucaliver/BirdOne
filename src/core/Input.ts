@@ -34,18 +34,26 @@ export class Input {
         });
 
         // Touch support
-        window.addEventListener('touchstart', (e) => {
-            if (e.touches.length > 0) {
-                updateMouse(e.touches[0].clientX, e.touches[0].clientY);
-                this.mouse.down = true;
-            }
-        }, { passive: false });
+        window.addEventListener(
+            'touchstart',
+            (e) => {
+                if (e.touches.length > 0) {
+                    updateMouse(e.touches[0].clientX, e.touches[0].clientY);
+                    this.mouse.down = true;
+                }
+            },
+            { passive: false },
+        );
 
-        window.addEventListener('touchmove', (e) => {
-            if (e.touches.length > 0) {
-                updateMouse(e.touches[0].clientX, e.touches[0].clientY);
-            }
-        }, { passive: false });
+        window.addEventListener(
+            'touchmove',
+            (e) => {
+                if (e.touches.length > 0) {
+                    updateMouse(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            },
+            { passive: false },
+        );
 
         window.addEventListener('touchend', () => {
             this.mouse.down = false;
