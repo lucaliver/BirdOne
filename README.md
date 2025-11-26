@@ -140,3 +140,4 @@ npm run build
 ## Deployment
 
 Il gioco è configurato per il deploy automatico su GitHub Pages tramite GitHub Actions.
+.
