@@ -140,6 +140,3 @@ npm run build
 ## Deployment
 
 Il gioco è configurato per il deploy automatico su GitHub Pages tramite GitHub Actions.
-
-- **URL:** [https://lucaliver.github.io/BirdOne/](https://lucaliver.github.io/BirdOne/)
-- **Workflow:** `.github/workflows/deploy.yml`
