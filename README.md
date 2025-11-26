@@ -2,6 +2,12 @@
 
 Videogioco 2D d'azione single-player in stile MOBA (5v5) web per mobile con controlli touch.
 
+- **Gameplay MOBA 5v5**: Controlla un uccello e combatti insieme a 4 alleati bot contro 5 nemici.
+- **AI Reattiva**: Bot intelligenti che cercano bersagli, schivano e attaccano autonomamente.
+- **Mobile First**: Controlli touch ottimizzati (Joystick virtuale) per un'esperienza fluida su smartphone.
+- **Performance Elevate**: Motore grafico basato su HTML5 Canvas e TypeScript.
+- **Architettura Modulare**: Codice organizzato, tipizzato e scalabile.
+
 ## 1. PANORAMICA TECNOLOGICA
 
 ### STACK TECNOLOGICO
@@ -130,3 +136,10 @@ npm run dev:host
 ```bash
 npm run build
 ```
+
+## Deployment
+
+Il gioco è configurato per il deploy automatico su GitHub Pages tramite GitHub Actions.
+
+- **URL:** [https://lucaliver.github.io/BirdOne/](https://lucaliver.github.io/BirdOne/)
+- **Workflow:** `.github/workflows/deploy.yml`
