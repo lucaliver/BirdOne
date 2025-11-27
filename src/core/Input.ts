@@ -1,3 +1,5 @@
+import { GAME_CONFIG } from '../config/Constants';
+
 export class Input {
     keys: { [key: string]: boolean } = {};
     mouse: { x: number; y: number; down: boolean } = { x: 0, y: 0, down: false };
@@ -13,8 +15,19 @@ export class Input {
         // Mouse
         const updateMouse = (clientX: number, clientY: number) => {
             const rect = target.getBoundingClientRect();
-            this.mouse.x = (clientX - rect.left) / this.scale;
-            this.mouse.y = (clientY - rect.top) / this.scale;
+            // Calculate scale based on actual displayed size vs logical size
+            // The 'scale' property in Game.ts is for drawing context.
+            // Here we need to map screen coordinates to logical coordinates.
+            
+            // 1. Get position relative to canvas
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+
+            // 2. Convert to logical space
+            const scaleFactor = GAME_CONFIG.LOGICAL_RES.HEIGHT / rect.height;
+            
+            this.mouse.x = x * scaleFactor;
+            this.mouse.y = y * scaleFactor;
         };
 
         window.addEventListener('mousemove', (e) => updateMouse(e.clientX, e.clientY));

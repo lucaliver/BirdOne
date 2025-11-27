@@ -40,12 +40,12 @@ export class TutorialScene extends Scene {
         ctx.fillText('Use WASD/Arrows to Move', w / 2, h / 2);
         ctx.fillText('Click/Tap to Shoot', w / 2, h / 2 + 40);
 
-        // Back Button
-        ctx.fillStyle = '#f00';
-        ctx.fillRect(10, 10, 80, 40);
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 20px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('BACK', 50, 38);
+        // Back Button (Gray Arrow)
+        ctx.fillStyle = '#888';
+        ctx.beginPath();
+        ctx.moveTo(60, 20);
+        ctx.lineTo(30, 40);
+        ctx.lineTo(60, 60);
+        ctx.fill();
     }
 }

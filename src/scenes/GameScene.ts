@@ -5,6 +5,7 @@ import { Bird, type BirdRace } from '../entities/Bird';
 import { GameState } from '../core/GameState';
 import { BotController } from '../core/BotController';
 import { HUD } from '../ui/HUD';
+import { AssetManager } from '../core/AssetManager';
 
 export class GameScene extends Scene {
     gameState: GameState;
@@ -182,6 +183,24 @@ export class GameScene extends Scene {
     }
 
     draw(ctx: CanvasRenderingContext2D): void {
+        // Draw Background
+        const bg = AssetManager.getImage('Background');
+        if (bg) {
+            // Draw tiled background or stretched? Let's do tiled for now or just simple draw.
+            // Since it's a seamless texture, we can create a pattern.
+            const pattern = ctx.createPattern(bg, 'repeat');
+            if (pattern) {
+                ctx.fillStyle = pattern;
+                // Fill the entire logical area. Let's assume a large area for now.
+                // Or just the canvas size.
+                // Since we are scaled, we need to fill the logical size.
+                // Let's just fill a large area to cover everything.
+                ctx.fillRect(0, 0, this.game.canvas.width / this.game.scale, this.game.canvas.height / this.game.scale);
+            } else {
+                ctx.drawImage(bg, 0, 0);
+            }
+        }
+
         if (this.gameState.player) this.gameState.player.draw(ctx);
         this.gameState.allies.forEach((e) => e.draw(ctx));
         this.gameState.enemies.forEach((e) => e.draw(ctx));

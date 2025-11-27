@@ -3,6 +3,7 @@ import { Game } from '../core/Game';
 import { GameScene } from './GameScene';
 import { MenuScene } from './MenuScene';
 import type { BirdRace } from '../entities/Bird';
+import { AssetManager } from '../core/AssetManager';
 
 export class CharacterSelectionScene extends Scene {
     races: BirdRace[] = ['Eagle', 'Owl', 'Pidgeon', 'Hummingbird'];
@@ -13,7 +14,6 @@ export class CharacterSelectionScene extends Scene {
     }
 
     update(_dt: number): void {
-        // Selection
         let selectNext = false;
         let selectPrev = false;
         let startGame = false;
@@ -29,21 +29,24 @@ export class CharacterSelectionScene extends Scene {
         if (this.game.input.mouse.down && !this.game.input.isDown('Mouse_prev')) {
             const x = this.game.input.mouse.x;
             const y = this.game.input.mouse.y;
-            const w = this.game.canvas.width;
-            const h = this.game.canvas.height;
+            const w = this.game.canvas.width / this.game.scale;
+            const h = 1080;
 
             // Back Button (Top-Left)
             if (x < 100 && y < 60) {
                 goBack = true;
             }
-            // Simple zones
-            else if (y > h * 0.7) {
-                // Bottom area for Start
+            // Select Button (Bottom)
+            else if (y > h - 150 && y < h - 50 && x > w / 2 - 100 && x < w / 2 + 100) {
                 startGame = true;
-            } else {
-                if (x < w * 0.3) selectPrev = true;
-                else if (x > w * 0.7) selectNext = true;
-                else startGame = true; // Center tap also starts
+            }
+            // Left Arrow Zone
+            else if (x < w * 0.3) {
+                selectPrev = true;
+            }
+            // Right Arrow Zone
+            else if (x > w * 0.7) {
+                selectNext = true;
             }
         }
 
@@ -73,55 +76,60 @@ export class CharacterSelectionScene extends Scene {
         const w = ctx.canvas.width / scale;
         const h = 1080;
 
+        // Background
+        ctx.fillStyle = '#222';
+        ctx.fillRect(0, 0, w, h);
+
+        // Title
         ctx.fillStyle = '#fff';
-        const titleSize = Math.min(48, Math.floor(w * 0.1));
-        ctx.font = `${titleSize}px Arial`;
+        ctx.font = 'bold 48px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('BIRD MOBA', w / 2, h / 2 - 100);
+        ctx.fillText('SELECT YOUR HERO', w / 2, 100);
 
-        ctx.font = '24px Arial';
-        ctx.fillText('Select Your Bird:', w / 2, h / 2 - 20);
+        // Current Character Sprite
+        const race = this.races[this.selectedRaceIndex];
+        const img = AssetManager.getImage(race);
+        if (img) {
+            const size = 200;
+            ctx.drawImage(img, w / 2 - size / 2, h / 2 - size / 2, size, size);
+        }
 
-        this.races.forEach((race, index) => {
-            const isSelected = index === this.selectedRaceIndex;
-            ctx.fillStyle = isSelected ? 'yellow' : 'gray';
-            ctx.font = isSelected ? 'bold 30px Arial' : '24px Arial';
-            ctx.fillText(race, w / 2, h / 2 + 30 + index * 40);
-        });
+        // Character Name
+        ctx.fillStyle = '#00BFFF';
+        ctx.font = 'bold 40px Arial';
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 4;
+        ctx.strokeText(race, w / 2, h / 2 + 150);
+        ctx.fillText(race, w / 2, h / 2 + 150);
 
-        // Draw Touch Controls Hints
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
         // Left Arrow
+        ctx.fillStyle = '#888';
         ctx.beginPath();
-        ctx.moveTo(50, h / 2);
-        ctx.lineTo(100, h / 2 - 30);
-        ctx.lineTo(100, h / 2 + 30);
+        ctx.moveTo(100, h / 2);
+        ctx.lineTo(150, h / 2 - 40);
+        ctx.lineTo(150, h / 2 + 40);
         ctx.fill();
 
         // Right Arrow
         ctx.beginPath();
-        ctx.moveTo(w - 50, h / 2);
-        ctx.lineTo(w - 100, h / 2 - 30);
-        ctx.lineTo(w - 100, h / 2 + 30);
+        ctx.moveTo(w - 100, h / 2);
+        ctx.lineTo(w - 150, h / 2 - 40);
+        ctx.lineTo(w - 150, h / 2 + 40);
         ctx.fill();
 
-        // Start Button
+        // Select Button
         ctx.fillStyle = 'lime';
-        ctx.fillRect(w / 2 - 100, h - 100, 200, 60);
+        ctx.fillRect(w / 2 - 100, h - 150, 200, 80);
         ctx.fillStyle = 'black';
         ctx.font = 'bold 30px Arial';
-        ctx.fillText('START', w / 2, h - 60);
+        ctx.fillText('SELECT', w / 2, h - 100);
 
-        ctx.fillStyle = '#aaa';
-        ctx.font = '16px Arial';
-        ctx.fillText('Tap Left/Right to Select, Bottom to Start', w / 2, h - 20);
-
-        // Back Button
-        ctx.fillStyle = '#f00';
-        ctx.fillRect(10, 10, 80, 40);
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 20px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('BACK', 50, 38);
+        // Back Button (Gray Arrow)
+        ctx.fillStyle = '#888';
+        ctx.beginPath();
+        ctx.moveTo(60, 20);
+        ctx.lineTo(30, 40);
+        ctx.lineTo(60, 60);
+        ctx.fill();
     }
 }

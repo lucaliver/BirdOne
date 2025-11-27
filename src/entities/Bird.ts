@@ -1,6 +1,7 @@
 import { Entity } from './Entity';
 import { Projectile } from './Projectile';
 import { BIRD_STATS, COLORS } from '../config/Constants';
+import { AssetManager } from '../core/AssetManager';
 
 export type BirdRace = 'Eagle' | 'Owl' | 'Pidgeon' | 'Hummingbird';
 
@@ -15,7 +16,7 @@ export class Bird extends Entity {
     team: 'player' | 'enemy';
 
     constructor(x: number, y: number, race: BirdRace, team: 'player' | 'enemy') {
-        super(x, y, 32, 32, team === 'player' ? COLORS.PLAYER : COLORS.ENEMY);
+        super(x, y, 80, 80, team === 'player' ? COLORS.PLAYER : COLORS.ENEMY);
         this.race = race;
         this.team = team;
 
@@ -77,7 +78,25 @@ export class Bird extends Entity {
     }
 
     draw(ctx: CanvasRenderingContext2D) {
-        super.draw(ctx);
+        // Draw Sprite
+        const img = AssetManager.getImage(this.race);
+        if (img) {
+            ctx.save();
+            ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+            
+            // Rotate based on velocity
+            if (this.vx !== 0 || this.vy !== 0) {
+                const angle = Math.atan2(this.vy, this.vx);
+                ctx.rotate(angle);
+            }
+
+            // Draw image centered
+            ctx.drawImage(img, -this.width / 2, -this.height / 2, this.width, this.height);
+            ctx.restore();
+        } else {
+            // Fallback
+            super.draw(ctx);
+        }
 
         // Draw HP bar
         const hpPercent = this.hp / this.maxHp;
@@ -87,9 +106,20 @@ export class Bird extends Entity {
         ctx.fillRect(this.x, this.y - 10, this.width * hpPercent, 5);
 
         // Draw Race Name
-        ctx.fillStyle = 'white';
-        ctx.font = '10px Arial';
+        ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
+        
+        // Outline
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 3;
+        ctx.strokeText(this.race, this.x + this.width / 2, this.y - 15);
+
+        // Fill
+        if (this.team === 'player') {
+            ctx.fillStyle = '#00BFFF'; // Deep Sky Blue
+        } else {
+            ctx.fillStyle = '#FF4500'; // Orange Red
+        }
         ctx.fillText(this.race, this.x + this.width / 2, this.y - 15);
     }
 }
